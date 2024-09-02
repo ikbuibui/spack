@@ -8,9 +8,9 @@ from typing import Dict, Generator, Optional, Set, Tuple, Union
 import llnl.util.filesystem as fs
 import llnl.util.lang as lang
 import llnl.util.tty as tty
+
 import spack.builder
 import spack.deptypes as dt
-
 from spack.dependency import Dependency
 from spack.directives import extends
 from spack.error import SpackError
@@ -69,7 +69,6 @@ class RBuilder(GenericBuilder):
         # in our dictionary we have a single package
         # metadata parsed so we yield and repeat again.
         for line in data.splitlines():
-
             if not line.strip():
                 continue
 
@@ -104,7 +103,6 @@ class RBuilder(GenericBuilder):
         # the last parsed package.
         if package:
             yield package
-
 
     def verify_package(self):
         if not self.pkg.run_tests:
