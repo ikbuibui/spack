@@ -6,18 +6,15 @@
 import os
 import re
 import subprocess
-import sys
 import tempfile
 from typing import Dict
 
 import archspec.cpu
 
-import spack.compiler
 import spack.operating_systems.windows_os
 import spack.platforms
 import spack.util.executable
 from spack.compiler import Compiler
-from spack.error import SpackError
 from spack.version import Version, VersionRange
 
 FC_PATH: Dict[str, str] = dict()
@@ -117,14 +114,6 @@ def get_valid_fortran_pth():
 
 
 class Msvc(Compiler):
-    # Named wrapper links within build_env_path
-    # Due to the challenges of supporting compiler wrappers
-    # in Windows, we leave these blank, and dynamically compute
-    # based on proper versions of MSVC from there
-    # pending acceptance of #28117 for full support using
-    # compiler wrappers
-    link_paths = {"cc": "", "cxx": "", "f77": "", "fc": ""}
-
     #: Compiler argument that produces version information
     version_argument = ""
 
@@ -301,7 +290,7 @@ class Msvc(Compiler):
         return Version(
             re.search(
                 Msvc.version_regex,
-                spack.compiler.get_compiler_version_output(
+                spack.build_systems.compiler.compiler_output(
                     compiler, version_arg=None, ignore_errors=True
                 ),
             ).group(1)
@@ -365,19 +354,3 @@ class Msvc(Compiler):
         env.set("CXX", self.cxx)
         env.set("FC", self.fc)
         env.set("F77", self.f77)
-
-    @classmethod
-    def fc_version(cls, fc):
-        if not sys.platform == "win32":
-            return "unknown"
-        fc_ver = cls.default_version(fc)
-        FC_PATH[fc_ver] = fc
-        try:
-            sps = spack.operating_systems.windows_os.WindowsOs().compiler_search_paths
-        except AttributeError:
-            raise SpackError(
-                "Windows compiler search paths not established, "
-                "please report this behavior to github.com/spack/spack"
-            )
-        clp = spack.util.executable.which_string("cl", path=sps)
-        return cls.default_version(clp) if clp else fc_ver
