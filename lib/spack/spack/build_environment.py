@@ -60,7 +60,6 @@ import spack.build_systems.cmake
 import spack.build_systems.meson
 import spack.build_systems.python
 import spack.builder
-import spack.compilers
 import spack.config
 import spack.deptypes as dt
 import spack.error
@@ -720,11 +719,6 @@ def setup_package(pkg, dirty, context: Context = Context.BUILD):
     # Load modules on an already clean environment, just before applying Spack's
     # own environment modifications. This ensures Spack controls CC/CXX/... variables.
     load_external_modules(pkg)
-
-    # FIXME (compiler as nodes): recover implicit RPATHs
-    # implicit_rpaths = pkg.compiler.implicit_rpaths()
-    # if implicit_rpaths:
-    #     env_mods.set("SPACK_COMPILER_IMPLICIT_RPATHS", ":".join(implicit_rpaths))
 
     # Make sure nothing's strange about the Spack environment.
     validate(env_mods, tty.warn)
