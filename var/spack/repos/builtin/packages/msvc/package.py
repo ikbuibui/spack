@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 import re
 
+import spack.build_systems.compiler
 from spack.package import *
 
 
@@ -26,13 +27,23 @@ class Msvc(Package, CompilerPackage):
     compiler_version_argument = ""
     compiler_version_regex = r"([1-9][0-9]*\.[0-9]*\.[0-9]*)"
 
+    # Named wrapper links within build_env_path
+    # Due to the challenges of supporting compiler wrappers
+    # in Windows, we leave these blank, and dynamically compute
+    # based on proper versions of MSVC from there
+    # pending acceptance of #28117 for full support using
+    # compiler wrappers
+    link_paths = {"c": "", "cxx": "", "fortran": ""}
+
     @classmethod
     def determine_version(cls, exe):
         # MSVC compiler does not have a proper version argument
         # Errors out and prints version info with no args
         match = re.search(
             cls.compiler_version_regex,
-            spack.compiler.get_compiler_version_output(exe, version_arg=None, ignore_errors=True),
+            spack.build_systems.compiler.compiler_output(
+                exe, version_argument=None, ignore_errors=1
+            ),
         )
         if match:
             return match.group(1)

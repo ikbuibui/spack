@@ -17,6 +17,10 @@ class AppleClang(BundlePackage, LlvmDetection, CompilerPackage):
     compiler_languages = ["c", "cxx"]
     compiler_version_regex = r"^Apple (?:LLVM|clang) version ([^ )]+)"
 
+    openmp_flag = "-Xpreprocessor -fopenmp"
+
+    provides("c", "cxx")
+
     @classmethod
     def validate_detected_spec(cls, spec, extra_attributes):
         msg = f'the extra attribute "compilers" must be set for the detected spec "{spec}"'
@@ -37,3 +41,28 @@ class AppleClang(BundlePackage, LlvmDetection, CompilerPackage):
         msg = "apple-clang is expected to be an external spec"
         assert self.spec.concrete and self.spec.external, msg
         return self.spec.extra_attributes["compilers"].get("cxx", None)
+
+    def _standard_flag(self, *, language, standard):
+        flags = {
+            "cxx": {
+                "11": [("@4.0:", "-std=c++11")],
+                "14": [("@6.1:", "-std=c++14")],
+                "17": [("@6.1:10.0", "-std=c++1z"), ("10.1:", "-std=c++17")],
+                "20": [("@10.0:13.0", "-std=c++2a"), ("13.1:", "-std=c++20")],
+                "23": [("13.0:", "-std=c++2b")],
+            },
+            "c": {
+                "99": [("@4.0:", "-std=c99")],
+                "11": [("@4.0:", "-std=c11")],
+                "17": [("@11.1:", "-std=c17")],
+                "23": [("@11.1:", "-std=c2x")],
+            },
+        }
+        for condition, flag in flags[language][standard]:
+            if self.spec.satisfies(condition):
+                return flag
+        else:
+            raise RuntimeError(
+                f"{self.spec} does not support the '{standard}' standard "
+                f"for the '{language}' language"
+            )
